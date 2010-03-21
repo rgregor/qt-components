@@ -30,6 +30,7 @@
 #include <QDateTime>
 #include <QtGlobal>
 #include <cassert>
+#include <cstdlib>
 
 namespace QsLogging
 {
@@ -131,7 +132,7 @@ Logger::Helper::~Helper()
    }
    catch(...)
    {
-      // you've thrown an exception from sink, haven't you!?
+      // you've thrown an exception from a sink, haven't you!?
       assert(!"exception in logger helper destructor");
       abort();
    }
