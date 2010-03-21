@@ -48,7 +48,7 @@ private:
 FileDestination::FileDestination(const QString& filePath)
 {
    mFile.setFileName(filePath);
-   mFile.open(QFile::WriteOnly | QFile::Text);
+   mFile.open(QFile::WriteOnly | QFile::Text); //fixme: should throw on failure
    mOutputStream.setDevice(&mFile);
 }
 
@@ -58,7 +58,7 @@ void FileDestination::write(const QString& message)
    mOutputStream.flush();
 }
 
-//! debugger message window sink
+//! debugger sink
 class DebugOutputDestination : public Destination
 {
 public:
