@@ -35,7 +35,7 @@ namespace QsLogging
 class Destination
 {
 public:
-   virtual ~Destination(){};
+   virtual ~Destination(){}
    virtual void write(const QString& message) = 0;
 };
 typedef std::auto_ptr<Destination> DestinationPtr;
