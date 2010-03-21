@@ -27,20 +27,13 @@
 #include "QsLogDest.h"
 #include <QMutex>
 #include <QList>
-#include <QString>
 #include <QDateTime>
 #include <QtGlobal>
+#include <cassert>
 
 namespace QsLogging
 {
 typedef QList<Destination*> DestinationList;
-
-const char detail::traceMessage = '0';
-const char detail::debugMessage = '1';
-const char detail::infoMessage = '2';
-const char detail::warnMessage = '3';
-const char detail::errorMessage = '4';
-const char detail::fatalMessage = '5';
 
 static const char TraceString[] = "TRACE";
 static const char DebugString[] = "DEBUG";
@@ -49,26 +42,30 @@ static const char WarnString[]  = "WARN";
 static const char ErrorString[] = "ERROR";
 static const char FatalString[] = "FATAL";
 
+// not using Qt::ISODate because we need the milliseconds too
 static const QString fmtDateTime("yyyy-MM-ddThh:mm:ss.zzz");
 
-static const char* LevelToText(char aLevel)
+static const char* LevelToText(Level theLevel)
 {
-   switch( aLevel )
+   switch( theLevel )
    {
-   case detail::traceMessage:
+   case TraceLevel:
       return TraceString;
-   case detail::debugMessage:
+   case DebugLevel:
       return DebugString;
-   case detail::infoMessage:
+   case InfoLevel:
       return InfoString;
-   case detail::warnMessage:
+   case WarnLevel:
       return WarnString;
-   case detail::errorMessage:
+   case ErrorLevel:
       return ErrorString;
-   case detail::fatalMessage:
+   case FatalLevel:
       return FatalString;
    default:
-      return InfoString;
+      {
+         assert(!"bad log level");
+         return InfoString;
+      }
    }
 }
 
@@ -76,15 +73,13 @@ class LoggerImpl
 {
 public:
    LoggerImpl() :
-      mOldHandler(0),
-      mLevel(InfoLevel)
+      level(InfoLevel)
    {
 
    }
    QMutex logMutex;
-   QtMsgHandler mOldHandler;
-   Level mLevel;
-   DestinationList mDestList;
+   Level level;
+   DestinationList destList;
 };
 
 Logger::Logger() :
@@ -97,65 +92,60 @@ Logger::~Logger()
    delete d;
 }
 
-Logger& Logger::instance()
-{
-   static Logger staticLog;
-   return staticLog;
-}
-
-//! Only install the handler if someone has added at least a destination to 
-//! our log. 
 void Logger::addDestination(Destination* destination)
 {
-   if( !d->mOldHandler )
-      d->mOldHandler = qInstallMsgHandler(&Logger::messageHandler);
-   d->mDestList.push_back(destination);
+   assert(destination);
+   d->destList.push_back(destination);
 }
 
 void Logger::setLoggingLevel(Level newLevel)
 {
-   d->mLevel = newLevel;
+   d->level = newLevel;
 }
 
 Level Logger::loggingLevel() const
 {
-   return d->mLevel;
+   return d->level;
+}
+
+//! creates the complete log message and passes it to the logger
+void Logger::Helper::writeToLog()
+{
+   const char* const levelName = LevelToText(level);
+   const QString completeMessage(QString("%1 %2 %3")
+      .arg(levelName, 5)
+      .arg(QDateTime::currentDateTime().toString(fmtDateTime))
+      .arg(buffer)
+      );
+
+   Logger& logger = Logger::instance();
+   QMutexLocker lock(&logger.d->logMutex);
+   logger.write(completeMessage);
+}
+
+Logger::Helper::~Helper()
+{
+   try
+   {
+      writeToLog();
+   }
+   catch(...)
+   {
+      // you've thrown an exception from sink, haven't you!?
+      assert(!"exception in logger helper destructor");
+      abort();
+   }
 }
 
 //! sends the message to all the destinations
 void Logger::write(const QString& message)
 {
-   for(DestinationList::iterator it = d->mDestList.begin(),
-       endIt = d->mDestList.end();it != endIt;++it)
+   for(DestinationList::iterator it = d->destList.begin(),
+       endIt = d->destList.end();it != endIt;++it)
    {
+      assert(*it);
       (*it)->write(message);
    }
-}
-
-//! the first character of the message is the message type
-//! The qt message type is ignored.
-//! Do not call any qt functions from this function, it may cause an infinite loop!
-void Logger::messageHandler(QtMsgType qtType, const char* message)
-{
-   Q_UNUSED(qtType);
-   if( !message )
-      return;
-
-   Logger& logger = Logger::instance();
-   const char msgType = message[0];
-   const char* const msg = 
-      (msgType >= detail::traceMessage
-      && msgType <= detail::fatalMessage ? message + 1 : message);
-   const char* const levelName = LevelToText(msgType);
-
-   const QString sCompleteMessage(QString("%1 %2 %3")
-      .arg(levelName, 5)
-      .arg(QDateTime::currentDateTime().toString(fmtDateTime))
-      .arg(msg)
-      );
-
-   QMutexLocker lock(&logger.d->logMutex);
-   logger.write(sCompleteMessage);
 }
 
 } // end namespace
