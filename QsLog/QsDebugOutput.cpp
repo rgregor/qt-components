@@ -28,6 +28,7 @@
 #include <QtGlobal>
 
 #if defined(Q_OS_WIN)
+#define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
 void QsDebugOutput::output( const QString& message )
 {
@@ -38,6 +39,7 @@ void QsDebugOutput::output( const QString& message )
 #include <cstdio>
 void QsDebugOutput::output( const QString& message )
 {
-   fprintf(stderr, qPrintable(message));
+   fprintf(stderr, "%s\n", qPrintable(message));
+   fflush(stderr);
 }
 #endif
