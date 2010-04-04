@@ -52,19 +52,21 @@ public:
       return staticLog;
    }
 
-   //! adds a log message destination
+   //! Adds a log message destination. Don't add null destinations.
    void addDestination(Destination* destination);
-   //! logging at a level < 'newLevel' will be ignored
+   //! Logging at a level < 'newLevel' will be ignored
    void setLoggingLevel(Level newLevel);
-   //! the default level is INFO
+   //! The default level is INFO
    Level loggingLevel() const;
 
-   //! the helper forwards the streaming to QDebug and builds the final
-   //! log message
+   //! The helper forwards the streaming to QDebug and builds the final
+   //! log message.
    class Helper
    {
    public:
-      explicit Helper(Level logLevel) : level(logLevel), qtDebug(&buffer) {}
+      explicit Helper(Level logLevel) :
+            level(logLevel),
+            qtDebug(&buffer) {}
       ~Helper();
       QDebug& stream(){ return qtDebug; }
 
