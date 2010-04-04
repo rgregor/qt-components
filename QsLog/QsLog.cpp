@@ -31,6 +31,7 @@
 #include <QtGlobal>
 #include <cassert>
 #include <cstdlib>
+#include <stdexcept>
 
 namespace QsLogging
 {
@@ -130,11 +131,12 @@ Logger::Helper::~Helper()
    {
       writeToLog();
    }
-   catch(...)
+   catch(std::exception& e)
    {
-      // you've thrown an exception from a sink, haven't you!?
+      // you shouldn't throw exceptions from a sink
+      Q_UNUSED(e);
       assert(!"exception in logger helper destructor");
-      abort();
+      throw;
    }
 }
 
@@ -144,7 +146,11 @@ void Logger::write(const QString& message)
    for(DestinationList::iterator it = d->destList.begin(),
        endIt = d->destList.end();it != endIt;++it)
    {
-      assert(*it);
+      if( !(*it) )
+      {
+         assert(!"null log destination");
+         continue;
+      }
       (*it)->write(message);
    }
 }
