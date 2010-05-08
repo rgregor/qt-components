@@ -35,6 +35,13 @@ void QsDebugOutput::output( const QString& message )
    OutputDebugStringW(reinterpret_cast<const WCHAR*>(message.utf16()));
    OutputDebugStringW(L"\n");
 }
+#elif defined(Q_OS_SYMBIAN)
+#include <e32debug.h>
+void QsDebugOutput::output( const QString& message )
+{
+   TPtrC8 symbianMessage(reinterpret_cast<const TUint8*>(qPrintable(message)));
+   RDebug::RawPrint(symbianMessage);
+}
 #elif defined(Q_OS_UNIX)
 #include <cstdio>
 void QsDebugOutput::output( const QString& message )
