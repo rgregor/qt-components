@@ -1,4 +1,4 @@
-// Copyright (c) 2011, Razvan Petru
+// Copyright (c), Razvan Petru
 // All rights reserved.
 
 // Redistribution and use in source and binary forms, with or without modification,
@@ -23,47 +23,46 @@
 // OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 // OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "QsDebugOutput.h"
+#ifndef QSLANGUAGE_H
+#define QSLANGUAGE_H
+
+#include <QList>
 #include <QString>
-#include <QtGlobal>
+#include <QHash>
+class QTranslator;
 
-#if defined(Q_OS_WIN)
-#define WIN32_LEAN_AND_MEAN
-#include <Windows.h>
-void QsDebugOutput::output( const QString& message )
+class LanguageItem
 {
-   OutputDebugStringW(reinterpret_cast<const WCHAR*>(message.utf16()));
-   OutputDebugStringW(L"\n");
-}
-#elif defined(Q_OS_SYMBIAN)
-#include <e32debug.h>
-void QsDebugOutput::output( const QString& message )
-{
-    const int maxPrintSize = 256;
-    if(message.size() <= maxPrintSize)
-    {
-        TPtrC16 symbianMessage(reinterpret_cast<const TUint16*>(message.utf16()));
-        RDebug::RawPrint(symbianMessage);
-    }
-    else
-    {
-        QString slicedMessage = message;
-        while(!slicedMessage.isEmpty())
-        {
-            const int sliceSize = qMin(maxPrintSize, slicedMessage.size());
-            const QString slice = slicedMessage.left(sliceSize);
-            slicedMessage.remove(0, sliceSize);
+public:
+   QString name;
+   QString shortName;
+   int id;
+};
+typedef QList<LanguageItem> LanguageList;
 
-            TPtrC16 symbianSlice(reinterpret_cast<const TUint16*>(slice.utf16()));
-            RDebug::RawPrint(symbianSlice);
-        }
-    }
-}
-#elif defined(Q_OS_UNIX)
-#include <cstdio>
-void QsDebugOutput::output( const QString& message )
+class QsLanguage
 {
-   fprintf(stderr, "%s\n", qPrintable(message));
-   fflush(stderr);
-}
-#endif
+public:
+   QsLanguage();
+   ~QsLanguage();
+   const LanguageList& languages() const;
+   const LanguageItem& defaultLanguage() const;
+   //! returns the index of the language with the given id or -1
+   int indexOf(int id) const;
+   //! returns the index of the language with the given name or -1
+   int indexOfName(const QString& name) const;
+   //! returns the index of the language with the given name or -1
+   int indexOfShortName(const QString& sname) const;
+
+   const LanguageItem& activeLanguage() const;
+   bool saveActiveLanguage(int langId);
+   bool setApplicationLanguage(const int newLanguageId);
+
+private:
+   LanguageList mLanguages;
+   QHash<int,QTranslator*> mLangIdToTranslator;
+   QHash<int,QTranslator*> mLangIdToQtTranslator;
+   int mApplicationLanguage;
+};
+
+#endif // QSLANGUAGE_H
