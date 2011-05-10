@@ -1,4 +1,4 @@
-// Copyright (c) 2010, Razvan Petru
+// Copyright (c) 2011, Razvan Petru
 // All rights reserved.
 
 // Redistribution and use in source and binary forms, with or without modification,
@@ -26,10 +26,15 @@
 #include "QsKineticScroller.h"
 #include <QApplication>
 #include <QScrollBar>
+#include <QLineEdit>
+#include <QTextEdit>
+#include <QComboBox>
 #include <QAbstractScrollArea>
 #include <QMouseEvent>
 #include <QEvent>
 #include <QTimer>
+#include <QList>
+#include <QtDebug>
 #include <cstddef> // for NULL
 
 // A number of mouse moves are ignored after a press to differentiate
@@ -44,6 +49,13 @@ static const int gMaxDecelerationSpeed = 30;
 // influences how fast the scroller decelerates
 static const int gFriction = 1;
 
+//#define QS_KINETIC_DEBUG // uncomment to see debug messages
+#ifdef QS_KINETIC_DEBUG
+#define SCROLL_DEBUG() qDebug()
+#else
+#define SCROLL_DEBUG() QNoDebug()
+#endif
+
 class QsKineticScrollerImpl
 {
 public:
@@ -54,8 +66,7 @@ public:
       , lastMouseYPos(0)
       , lastScrollBarPosition(0)
       , velocity(0)
-      , ignoredMouseMoves(0)
-      , ignoredMouseActions(0) {}
+      , ignoredMouseMoves(0) {}
 
    void stopMotion()
    {
@@ -72,8 +83,9 @@ public:
    int lastScrollBarPosition;
    int velocity;
    int ignoredMouseMoves;
-   int ignoredMouseActions;
    QTimer kineticTimer;
+
+   QList<QEvent*> ignoreList;
 };
 
 QsKineticScroller::QsKineticScroller(QObject *parent)
@@ -90,24 +102,43 @@ QsKineticScroller::~QsKineticScroller()
 
 void QsKineticScroller::enableKineticScrollFor(QAbstractScrollArea* scrollArea)
 {
-   if( !scrollArea )
-   {
-      Q_ASSERT_X(0, "kinetic scroller", "missing scroll area");
-      return;
-   }
+    if( !scrollArea )
+    {
+        Q_ASSERT_X(0, "kinetic scroller", "missing scroll area");
+        return;
+    }
 
-   // remove existing association
-   if( d->scrollArea )
-   {
-      d->scrollArea->viewport()->removeEventFilter(this);
-      d->scrollArea->removeEventFilter(this);
-      d->scrollArea = NULL;
-   }
+    // remove existing association
+    if( d->scrollArea )
+    {
+        QList<QLineEdit*> edits = d->scrollArea->findChildren<QLineEdit*>();
+        Q_FOREACH(QLineEdit *edit, edits)
+            edit->removeEventFilter(this);
+        QList<QTextEdit*> textEdits = d->scrollArea->findChildren<QTextEdit*>();
+        Q_FOREACH(QTextEdit *textEdit, textEdits)
+            textEdit->viewport()->removeEventFilter(this);
+        QList<QComboBox*> combos = d->scrollArea->findChildren<QComboBox*>();
+        Q_FOREACH(QComboBox *combo, combos)
+            combo->removeEventFilter(this);
+        d->scrollArea->viewport()->removeEventFilter(this);
+        d->scrollArea->removeEventFilter(this);
+        d->scrollArea = NULL;
+    }
 
-   // associate
-   scrollArea->installEventFilter(this);
-   scrollArea->viewport()->installEventFilter(this);
-   d->scrollArea = scrollArea;
+    // associate
+    scrollArea->installEventFilter(this);
+    scrollArea->viewport()->installEventFilter(this);
+    d->scrollArea = scrollArea;
+
+    QList<QLineEdit*> edits = scrollArea->findChildren<QLineEdit*>();
+    Q_FOREACH(QLineEdit *edit, edits)
+        edit->installEventFilter(this);
+    QList<QTextEdit*> textEdits = scrollArea->findChildren<QTextEdit*>();
+    Q_FOREACH(QTextEdit *textEdit, textEdits)
+        textEdit->viewport()->installEventFilter(this);
+    QList<QComboBox*> combos = scrollArea->viewport()->findChildren<QComboBox*>();
+    Q_FOREACH(QComboBox *combo, combos)
+        combo->installEventFilter(this);
 }
 
 //! intercepts mouse events to make the scrolling work
@@ -117,18 +148,21 @@ bool QsKineticScroller::eventFilter(QObject* object, QEvent* event)
    const bool isMouseAction = QEvent::MouseButtonPress == eventType
       || QEvent::MouseButtonRelease == eventType;
    const bool isMouseEvent = isMouseAction || QEvent::MouseMove == eventType;
+
    if( !isMouseEvent || !d->scrollArea )
      return false;
-   if( isMouseAction && d->ignoredMouseActions-- > 0 ) // don't filter simulated click
-     return false;
+
+   if( isMouseAction && d->ignoreList.removeAll(event) > 0 ) // This event is ignored
+      return false;
 
    QMouseEvent* const mouseEvent = static_cast<QMouseEvent*>(event);
    switch( eventType )
    {
    case QEvent::MouseButtonPress:
       {
+         SCROLL_DEBUG() << "[scroll] press pos" << mouseEvent->globalPos();
          d->isPressed = true;
-         d->lastPressPoint = mouseEvent->pos();
+         d->lastPressPoint = mouseEvent->globalPos();
          d->lastScrollBarPosition = d->scrollArea->verticalScrollBar()->value();
          if( d->isMoving ) // press while kinetic scrolling, so stop
             d->stopMotion();
@@ -136,6 +170,7 @@ bool QsKineticScroller::eventFilter(QObject* object, QEvent* event)
       break;
    case QEvent::MouseMove:
       {
+         SCROLL_DEBUG() << "[scroll] move pos" << mouseEvent->globalPos();
          if( !d->isMoving )
          {
             // A few move events are ignored as "click jitter", but after that we
@@ -146,7 +181,7 @@ bool QsKineticScroller::eventFilter(QObject* object, QEvent* event)
             {
                d->ignoredMouseMoves = 0;
                d->isMoving = true;
-               d->lastMouseYPos = mouseEvent->pos().y();
+               d->lastMouseYPos = mouseEvent->globalPos().y();
                if( !d->kineticTimer.isActive() )
                   d->kineticTimer.start(gTimerInterval);
             }
@@ -154,28 +189,44 @@ bool QsKineticScroller::eventFilter(QObject* object, QEvent* event)
          else
          {
             // manual scroll
-            const int dragDistance = mouseEvent->pos().y() - d->lastPressPoint.y();
-            d->scrollArea->verticalScrollBar()->setValue(
-               d->lastScrollBarPosition - dragDistance);
+            const int dragDistance = mouseEvent->globalPos().y() - d->lastPressPoint.y();
+            const int finalScrollPos = d->lastScrollBarPosition - dragDistance;
+            d->scrollArea->verticalScrollBar()->setValue(finalScrollPos);
+            SCROLL_DEBUG() << "[scroll] manual scroll to" << finalScrollPos;
          }
       }
       break;
    case QEvent::MouseButtonRelease:
       {
+         const QPoint& releasePos = mouseEvent->pos();
+         SCROLL_DEBUG() << "[scroll] release pos" << releasePos;
          d->isPressed = false;
          d->ignoredMouseMoves = 0;
          // Looks like the user wanted a single click. Simulate the click,
          // as the events were already consumed
-         if( !d->isMoving )
+         const bool isEditWidget = (NULL != qobject_cast<QLineEdit*>(object)
+                                  || NULL != qobject_cast<QTextEdit*>(object->parent()));
+         const bool isCombobox = NULL != qobject_cast<QComboBox*>(object);
+         const bool isInterestingObject = (object == d->scrollArea->viewport() || isEditWidget
+            || isCombobox);
+         if( !d->isMoving && isInterestingObject )
          {
             QMouseEvent* mousePress = new QMouseEvent(QEvent::MouseButtonPress,
-               d->lastPressPoint, Qt::LeftButton, Qt::LeftButton, Qt::NoModifier);
+               releasePos, Qt::LeftButton, Qt::LeftButton, Qt::NoModifier);
             QMouseEvent* mouseRelease = new QMouseEvent(QEvent::MouseButtonRelease,
-               d->lastPressPoint, Qt::LeftButton, Qt::LeftButton, Qt::NoModifier);
+               releasePos, Qt::LeftButton, Qt::LeftButton, Qt::NoModifier);
 
-            d->ignoredMouseActions = 2;
+            // Ignore these two
+            d->ignoreList << mousePress;
+            d->ignoreList << mouseRelease;
+
             QApplication::postEvent(object, mousePress);
             QApplication::postEvent(object, mouseRelease);
+            if (isEditWidget) {
+                SCROLL_DEBUG() << "[scroll] trying to open keyboard";
+                QEvent *openKeyboard = new QEvent(QEvent::RequestSoftwareInputPanel);
+                QApplication::postEvent(object, openKeyboard);
+            }
          }
       }
       break;
@@ -191,9 +242,11 @@ void QsKineticScroller::onKineticTimerElapsed()
    if( d->isPressed && d->isMoving )
    {
       // the speed is measured between two timer ticks
-      const int cursorYPos = d->scrollArea->mapFromGlobal(QCursor::pos()).y();
+      const QPoint pos = QCursor::pos();
+      const int cursorYPos = pos.y();
       d->velocity = cursorYPos - d->lastMouseYPos;
       d->lastMouseYPos = cursorYPos;
+      SCROLL_DEBUG() << "[scroll] cursor Y pos" << cursorYPos << d->lastMouseYPos;
    }
    else if( !d->isPressed && d->isMoving )
    {
@@ -207,7 +260,9 @@ void QsKineticScroller::onKineticTimerElapsed()
          d->stopMotion();
 
       const int scrollBarYPos = d->scrollArea->verticalScrollBar()->value();
-      d->scrollArea->verticalScrollBar()->setValue(scrollBarYPos - d->velocity);
+      const int finalScrollPos = scrollBarYPos - d->velocity;
+      SCROLL_DEBUG() << "[scroll] kinetic scroll to" << finalScrollPos << "with velocity" << d->velocity;
+      d->scrollArea->verticalScrollBar()->setValue(finalScrollPos);
    }
    else
       d->stopMotion();
