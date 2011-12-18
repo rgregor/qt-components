@@ -1,4 +1,4 @@
-// Copyright (c) 2010, Razvan Petru
+// Copyright (c) 2012, Razvan Petru
 // All rights reserved.
 
 // Redistribution and use in source and binary forms, with or without modification,
@@ -26,6 +26,7 @@
 #ifndef QSLOGDEST_H
 #define QSLOGDEST_H
 
+#include "QsLogLevel.h"
 #include <memory>
 class QString;
 
@@ -35,8 +36,8 @@ namespace QsLogging
 class Destination
 {
 public:
-   virtual ~Destination(){}
-   virtual void write(const QString& message) = 0;
+    virtual ~Destination(){}
+    virtual void write(const QString& message, Level level) = 0;
 };
 typedef std::auto_ptr<Destination> DestinationPtr;
 
@@ -45,8 +46,8 @@ typedef std::auto_ptr<Destination> DestinationPtr;
 class DestinationFactory
 {
 public:
-   static DestinationPtr MakeFileDestination(const QString& filePath);
-   static DestinationPtr MakeDebugOutputDestination();
+    static DestinationPtr MakeFileDestination(const QString& filePath);
+    static DestinationPtr MakeDebugOutputDestination();
 };
 
 } // end namespace

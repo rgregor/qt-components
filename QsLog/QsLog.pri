@@ -6,4 +6,5 @@ SOURCES += $$PWD/QsLogDest.cpp \
 
 HEADERS += $$PWD/QSLogDest.h \
     $$PWD/QsLog.h \
-    $$PWD/QsDebugOutput.h
+    $$PWD/QsDebugOutput.h \
+    $$PWD/QsLogLevel.h

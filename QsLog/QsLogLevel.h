@@ -23,15 +23,22 @@
 // OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 // OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef QSDEBUGOUTPUT_H
-#define QSDEBUGOUTPUT_H
+#ifndef QSLOGLEVEL_H
+#define QSLOGLEVEL_H
 
-class QString;
-
-class QsDebugOutput
+namespace QsLogging
 {
-public:
-   static void output(const QString& a_message);
+
+enum Level
+{
+    TraceLevel = 0,
+    DebugLevel,
+    InfoLevel,
+    WarnLevel,
+    ErrorLevel,
+    FatalLevel
 };
 
-#endif // QSDEBUGOUTPUT_H
+}
+
+#endif // QSLOGLEVEL_H
