@@ -1,4 +1,4 @@
-// Copyright (c) 2012, Razvan Petru
+// Copyright (c) Razvan Petru
 // All rights reserved.
 
 // Redistribution and use in source and binary forms, with or without modification,
@@ -22,7 +22,6 @@
 // LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
 // OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 // OF THE POSSIBILITY OF SUCH DAMAGE.
-
 //! A component that stores the program version.
 
 #ifndef QSVERSION_H
@@ -30,6 +29,7 @@
 
 #include <QHash>
 class QString;
+class QDebug;
 
 class QsVersion
 {
@@ -46,7 +46,7 @@ public:
    int releaseVersion() const;
    //! returns the version number as "major.minor.release"
    QString toString() const;
-   //! checks if the version is not 0.0
+   //! checks that the version is not 0.0.0
    bool isValid() const;
 
    bool operator!=(const QsVersion& other) const;
@@ -65,5 +65,6 @@ inline uint qHash(const QsVersion &key)
     return qHash(key.majorVersion() ^ key.minorVersion());
 }
 
+QDebug operator<<(QDebug dbg, const QsVersion &version);
 
 #endif // QSVERSION_H

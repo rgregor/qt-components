@@ -1,4 +1,4 @@
-// Copyright (c) 2012, Razvan Petru
+// Copyright (c) Razvan Petru
 // All rights reserved.
 
 // Redistribution and use in source and binary forms, with or without modification,
@@ -26,14 +26,14 @@
 #include "QsVersion.h"
 #include <QString>
 #include <QRegExp>
-#include <cassert>
+#include <QtDebug>
 
 QsVersion::QsVersion(int major, int minor, int release) :
     mMajor(major),
     mMinor(minor),
     mRelease(release)
 {
-    assert(isValid());
+    Q_ASSERT(isValid());
 }
 
 
@@ -59,7 +59,7 @@ QsVersion::QsVersion( const QString& a_versionString ) :
             mRelease = versionRe.cap(ReleasePart).toInt();
     }
 
-    assert(isValid());
+    Q_ASSERT(isValid());
 }
 
 QsVersion::QsVersion() :
@@ -128,4 +128,10 @@ bool QsVersion::operator<(const QsVersion& other) const
 bool QsVersion::operator!=(const QsVersion& other) const
 {
     return !(*this == other);
+}
+
+QDebug operator<<(QDebug dbg, const QsVersion &version)
+{
+    dbg.nospace() << version.toString();
+    return dbg.space();
 }
