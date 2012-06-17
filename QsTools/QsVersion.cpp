@@ -27,6 +27,7 @@
 #include <QString>
 #include <QRegExp>
 #include <QtDebug>
+#include <QtGlobal>
 
 QsVersion::QsVersion(int major, int minor, int release) :
     mMajor(major),
