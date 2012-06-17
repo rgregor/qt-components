@@ -52,11 +52,10 @@ QsVersion::QsVersion( const QString& a_versionString ) :
     };
     const int partCount = 3;
     QRegExp versionRe("^(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})*$");
-    if( a_versionString.contains(versionRe) )
-    {
+    if (a_versionString.contains(versionRe)) {
         mMajor = versionRe.cap(MajorPart).toInt();
         mMinor = versionRe.cap(MinorPart).toInt();
-        if( partCount == versionRe.captureCount() )
+        if (partCount == versionRe.captureCount())
             mRelease = versionRe.cap(ReleasePart).toInt();
     }
 
@@ -68,7 +67,6 @@ QsVersion::QsVersion() :
     mMinor(0),
     mRelease(0)
 {
-
 }
 
 int QsVersion::minorVersion() const
