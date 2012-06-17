@@ -51,15 +51,13 @@ QsVersion::QsVersion( const QString& a_versionString ) :
         ReleasePart
     };
     const int partCount = 3;
-    QRegExp versionRe("^(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})*$");
+    QRegExp versionRe("^(\\d{1,3})\\.(\\d{1,3})(?:\\.(\\d{1,4}))*$");
     if (a_versionString.contains(versionRe)) {
         mMajor = versionRe.cap(MajorPart).toInt();
         mMinor = versionRe.cap(MinorPart).toInt();
         if (partCount == versionRe.captureCount())
             mRelease = versionRe.cap(ReleasePart).toInt();
     }
-
-    Q_ASSERT(isValid());
 }
 
 QsVersion::QsVersion() :

@@ -11,6 +11,7 @@ private slots:
     void initTestCase();
     void testValid();
     void testIntegerInit();
+    void testStringInit_data();
     void testStringInit();
     void testLessThan_data();
     void testLessThan();
@@ -45,13 +46,38 @@ void TestVersion::testIntegerInit()
     QCOMPARE(v1.releaseVersion(), 0);
 }
 
+void TestVersion::testStringInit_data()
+{
+    QTest::addColumn<QString>("versionString");
+    QTest::addColumn<int>("major");
+    QTest::addColumn<int>("minor");
+    QTest::addColumn<int>("release");
+    QTest::addColumn<bool>("isValid");
+
+    QTest::newRow("major.minor") << QString("10.14") << 10 << 14 << -1 << true;
+    QTest::newRow("major.minor.release") << QString("5.4.2055") << 5 << 4 << 2055 << true;
+    QTest::newRow("big numbers") << QString("999.999.9999") << 999 << 999 << 9999 << true;
+    QTest::newRow("mixed") << QString("1.512.3") << 1 << 512 << 3 << true;
+    QTest::newRow("major") << QString("5") << -1 << -1 << -1 << false;
+    QTest::newRow("wrong separator") << QString("5,1,3") << -1 << -1 << -1 << false;
+}
+
 void TestVersion::testStringInit()
 {
-    QsVersion v2("2.1.3");
-    QVERIFY(v2.isValid());
-    QCOMPARE(v2.majorVersion(), 2);
-    QCOMPARE(v2.minorVersion(), 1);
-    QCOMPARE(v2.releaseVersion(), 3);
+    QFETCH(QString, versionString);
+    QFETCH(int, major);
+    QFETCH(int, minor);
+    QFETCH(int, release);
+    QFETCH(bool, isValid);
+
+    QsVersion v(versionString);
+    QCOMPARE(v.isValid(), isValid);
+    if (isValid) {
+        QCOMPARE(v.majorVersion(), major);
+        QCOMPARE(v.minorVersion(), minor);
+        if (release > 0)
+            QCOMPARE(v.releaseVersion(), release);
+    }
 }
 
 void TestVersion::testLessThan_data()
