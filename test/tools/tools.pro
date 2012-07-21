@@ -10,7 +10,11 @@ INCLUDEPATH += "../../QsTools" \
 
 # test-case sources
 SOURCES += \
-    TestVersion.cpp
+    TestVersion.cpp \
+    TestLog.cpp
+
+# component sources
+include(../../QsLog/QsLog.pri)
 
 SOURCES += \
     ../QtTestUtil/TestRegistry.cpp \
