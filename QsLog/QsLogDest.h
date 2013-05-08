@@ -38,6 +38,7 @@ class Destination
 public:
     virtual ~Destination(){}
     virtual void write(const QString& message, Level level) = 0;
+    virtual bool isValid() = 0; // returns whether the destination was created correctly
 };
 typedef std::auto_ptr<Destination> DestinationPtr;
 

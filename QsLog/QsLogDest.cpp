@@ -38,6 +38,7 @@ class FileDestination : public Destination
 public:
     FileDestination(const QString& filePath);
     virtual void write(const QString& message, Level level);
+    virtual bool isValid();
 
 private:
     QFile mFile;
@@ -48,7 +49,7 @@ private:
 FileDestination::FileDestination(const QString& filePath)
 {
     mFile.setFileName(filePath);
-    mFile.open(QFile::WriteOnly | QFile::Text); //fixme: should throw on failure
+    mFile.open(QFile::WriteOnly | QFile::Text);
     mOutputStream.setDevice(&mFile);
 }
 
@@ -58,11 +59,18 @@ void FileDestination::write(const QString& message, Level)
     mOutputStream.flush();
 }
 
+bool FileDestination::isValid()
+{
+    return mFile.isOpen();
+}
+
+
 //! debugger sink
 class DebugOutputDestination : public Destination
 {
 public:
     virtual void write(const QString& message, Level level);
+    virtual bool isValid();
 };
 
 void DebugOutputDestination::write(const QString& message, Level)
@@ -70,6 +78,13 @@ void DebugOutputDestination::write(const QString& message, Level)
     QsDebugOutput::output(message);
 }
 
+bool DebugOutputDestination::isValid()
+{
+    return true;
+}
+
+
+//! destination factory
 DestinationPtr DestinationFactory::MakeFileDestination(const QString& filePath)
 {
     return DestinationPtr(new FileDestination(filePath));
