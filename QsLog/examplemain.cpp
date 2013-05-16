@@ -13,7 +13,7 @@ int main(int argc, char *argv[])
    logger.setLoggingLevel(QsLogging::TraceLevel);
    const QString sLogPath(QDir(a.applicationDirPath()).filePath("log.txt"));
    QsLogging::DestinationPtr fileDestination(
-      QsLogging::DestinationFactory::MakeFileDestination(sLogPath) );
+      QsLogging::DestinationFactory::MakeFileDestination(sLogPath, true, 512, 2) );
    QsLogging::DestinationPtr debugDestination(
       QsLogging::DestinationFactory::MakeDebugOutputDestination() );
    logger.addDestination(debugDestination.get());
@@ -31,8 +31,6 @@ int main(int argc, char *argv[])
    QLOG_FATAL() << "Fatal error!";
 
    const int ret = 0;
-   std::cout << std::endl << "Press any key...";
-   std::cin.get();
    QLOG_INFO() << "Program exited with return code" << ret;
    return ret;
 }

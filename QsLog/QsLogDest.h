@@ -28,6 +28,7 @@
 
 #include "QsLogLevel.h"
 #include <memory>
+#include <QtGlobal>
 class QString;
 
 namespace QsLogging
@@ -47,7 +48,7 @@ typedef std::auto_ptr<Destination> DestinationPtr;
 class DestinationFactory
 {
 public:
-    static DestinationPtr MakeFileDestination(const QString& filePath);
+    static DestinationPtr MakeFileDestination(const QString& filePath, bool enableRotation = false, qint64 sizeInBytesToRotateAfter = 0, int oldLogsToKeep = 0);
     static DestinationPtr MakeDebugOutputDestination();
 };
 
