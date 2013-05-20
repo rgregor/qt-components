@@ -102,7 +102,8 @@ private:
     if( QsLogging::Logger::instance().loggingLevel() > QsLogging::ErrorLevel ){} \
     else QsLogging::Logger::Helper(QsLogging::ErrorLevel).stream()
 #define QLOG_FATAL() \
-    QsLogging::Logger::Helper(QsLogging::FatalLevel).stream()
+    if( QsLogging::Logger::instance().loggingLevel() > QsLogging::FatalLevel ){} \
+    else QsLogging::Logger::Helper(QsLogging::FatalLevel).stream()
 #else
 #define QLOG_TRACE() \
     if( QsLogging::Logger::instance().loggingLevel() > QsLogging::TraceLevel ){} \
@@ -120,7 +121,12 @@ private:
     if( QsLogging::Logger::instance().loggingLevel() > QsLogging::ErrorLevel ){} \
     else QsLogging::Logger::Helper(QsLogging::ErrorLevel).stream() << __FILE__ << '@' << __LINE__
 #define QLOG_FATAL() \
-    QsLogging::Logger::Helper(QsLogging::FatalLevel).stream() << __FILE__ << '@' << __LINE__
+    if( QsLogging::Logger::instance().loggingLevel() > QsLogging::FatalLevel ){} \
+    else QsLogging::Logger::Helper(QsLogging::FatalLevel).stream() << __FILE__ << '@' << __LINE__
+#endif
+
+#ifdef QS_LOG_DISABLE
+#include "QsLogDisableForThisFile.h"
 #endif
 
 #endif // QSLOG_H

@@ -36,7 +36,8 @@ enum Level
     InfoLevel,
     WarnLevel,
     ErrorLevel,
-    FatalLevel
+    FatalLevel,
+    OffLevel
 };
 
 }

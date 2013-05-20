@@ -1,7 +1,7 @@
 #include "QsLog.h"
 #include "QsLogDest.h"
 #include <QtCore/QCoreApplication>
-#include <QDir>
+#include <QtCore/QDir>
 #include <iostream>
 
 int main(int argc, char *argv[])
@@ -22,7 +22,7 @@ int main(int argc, char *argv[])
    QLOG_INFO() << "Program started";
    QLOG_INFO() << "Built with Qt" << QT_VERSION_STR << "running on" << qVersion();
 
-   QLOG_TRACE() << "Here's a" << QString("trace") << "message";
+   QLOG_TRACE() << "Here's a" << QString::fromUtf8("trace") << "message";
    QLOG_DEBUG() << "Here's a" << static_cast<int>(QsLogging::DebugLevel) << "message";
    QLOG_WARN()  << "Uh-oh!";
    qDebug() << "This message won't be picked up by the logger";
@@ -30,9 +30,10 @@ int main(int argc, char *argv[])
    qWarning() << "Neither will this one";
    QLOG_FATAL() << "Fatal error!";
 
-   const int ret = 0;
-   std::cout << std::endl << "Press any key...";
-   std::cin.get();
-   QLOG_INFO() << "Program exited with return code" << ret;
-   return ret;
+   logger.setLoggingLevel(QsLogging::OffLevel);
+   for(int i = 0;i < 10000000;++i) {
+       QLOG_ERROR() << QString::fromUtf8("logging is turned off");
+   }
+
+   return 0;
 }

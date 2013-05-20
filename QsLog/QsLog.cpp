@@ -63,6 +63,8 @@ static const char* LevelToText(Level theLevel)
             return ErrorString;
         case FatalLevel:
             return FatalString;
+        case OffLevel:
+            return "";
         default:
         {
             assert(!"bad log level");
