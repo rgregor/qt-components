@@ -24,70 +24,26 @@
 // OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "QsLogDest.h"
-#include "QsDebugOutput.h"
-#include <QFile>
-#include <QTextStream>
+#include "QsLogDestConsole.h"
+#include "QsLogDestFile.h"
 #include <QString>
 
 namespace QsLogging
 {
 
-//! file message sink
-class FileDestination : public Destination
-{
-public:
-    FileDestination(const QString& filePath);
-    virtual void write(const QString& message, Level level);
-    virtual bool isValid();
-
-private:
-    QFile mFile;
-    QTextStream mOutputStream;
-};
-
-
-FileDestination::FileDestination(const QString& filePath)
-{
-    mFile.setFileName(filePath);
-    mFile.open(QFile::WriteOnly | QFile::Text);
-    mOutputStream.setDevice(&mFile);
-}
-
-void FileDestination::write(const QString& message, Level)
-{
-    mOutputStream << message << endl;
-    mOutputStream.flush();
-}
-
-bool FileDestination::isValid()
-{
-    return mFile.isOpen();
-}
-
-
-//! debugger sink
-class DebugOutputDestination : public Destination
-{
-public:
-    virtual void write(const QString& message, Level level);
-    virtual bool isValid();
-};
-
-void DebugOutputDestination::write(const QString& message, Level)
-{
-    QsDebugOutput::output(message);
-}
-
-bool DebugOutputDestination::isValid()
-{
-    return true;
-}
-
-
 //! destination factory
-DestinationPtr DestinationFactory::MakeFileDestination(const QString& filePath)
+DestinationPtr DestinationFactory::MakeFileDestination(const QString& filePath, bool enableRotation,
+                                                       qint64 sizeInBytesToRotateAfter, int oldLogsToKeep)
 {
-    return DestinationPtr(new FileDestination(filePath));
+    if (enableRotation) {
+        QScopedPointer<SizeRotationStrategy> logRotation(new SizeRotationStrategy);
+        logRotation->setMaximumSizeInBytes(sizeInBytesToRotateAfter);
+        logRotation->setBackupCount(oldLogsToKeep);
+
+        return DestinationPtr(new FileDestination(filePath, RotationStrategyPtr(logRotation.take())));
+    }
+
+    return DestinationPtr(new FileDestination(filePath, RotationStrategyPtr(new NullRotationStrategy)));
 }
 
 DestinationPtr DestinationFactory::MakeDebugOutputDestination()

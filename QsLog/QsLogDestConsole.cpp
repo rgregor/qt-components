@@ -23,7 +23,7 @@
 // OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 // OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "QsDebugOutput.h"
+#include "QsLogDestConsole.h"
 #include <QString>
 #include <QtGlobal>
 
@@ -67,3 +67,13 @@ void QsDebugOutput::output( const QString& message )
    fflush(stderr);
 }
 #endif
+
+void QsLogging::DebugOutputDestination::write(const QString& message, Level)
+{
+    QsDebugOutput::output(message);
+}
+
+bool QsLogging::DebugOutputDestination::isValid()
+{
+    return true;
+}
