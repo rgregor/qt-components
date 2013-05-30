@@ -54,8 +54,7 @@ static const QString fmtDateTime("yyyy-MM-ddThh:mm:ss.zzz");
 
 static const char* LevelToText(Level theLevel)
 {
-    switch( theLevel )
-    {
+    switch (theLevel) {
         case TraceLevel:
             return TraceString;
         case DebugLevel:
@@ -70,8 +69,7 @@ static const char* LevelToText(Level theLevel)
             return FatalString;
         case OffLevel:
             return "";
-        default:
-        {
+        default: {
             assert(!"bad log level");
             return InfoString;
         }
@@ -160,12 +158,10 @@ void Logger::Helper::writeToLog()
 
 Logger::Helper::~Helper()
 {
-    try
-    {
+    try {
         writeToLog();
     }
-    catch(std::exception&)
-    {
+    catch(std::exception&) {
         // you shouldn't throw exceptions from a sink
         assert(!"exception in logger helper destructor");
         throw;
@@ -188,9 +184,8 @@ void Logger::enqueueWrite(const QString& message, Level level)
 //! it's useful for processing in the destination.
 void Logger::write(const QString& message, Level level)
 {
-    for(DestinationList::iterator it = d->destList.begin(),
-        endIt = d->destList.end();it != endIt;++it)
-    {
+    for (DestinationList::iterator it = d->destList.begin(),
+        endIt = d->destList.end();it != endIt;++it) {
         (*it)->write(message, level);
     }
 }

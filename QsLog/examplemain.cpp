@@ -31,7 +31,7 @@ int main(int argc, char *argv[])
    QLOG_FATAL() << "Fatal error!";
 
    logger.setLoggingLevel(QsLogging::OffLevel);
-   for(int i = 0;i < 10000000;++i) {
+   for (int i = 0;i < 10000000;++i) {
        QLOG_ERROR() << QString::fromUtf8("logging is turned off");
    }
 

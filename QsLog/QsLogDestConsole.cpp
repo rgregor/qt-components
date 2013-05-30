@@ -40,16 +40,12 @@ void QsDebugOutput::output( const QString& message )
 void QsDebugOutput::output( const QString& message )
 {
     const int maxPrintSize = 256;
-    if(message.size() <= maxPrintSize)
-    {
+    if (message.size() <= maxPrintSize) {
         TPtrC16 symbianMessage(reinterpret_cast<const TUint16*>(message.utf16()));
         RDebug::RawPrint(symbianMessage);
-    }
-    else
-    {
+    } else {
         QString slicedMessage = message;
-        while(!slicedMessage.isEmpty())
-        {
+        while (!slicedMessage.isEmpty()) {
             const int sliceSize = qMin(maxPrintSize, slicedMessage.size());
             const QString slice = slicedMessage.left(sliceSize);
             slicedMessage.remove(0, sliceSize);

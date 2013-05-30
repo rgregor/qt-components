@@ -71,7 +71,7 @@ void QsLogging::SizeRotationStrategy::rotate()
      // 1. find the last existing backup than can be shifted up
      const QString logNamePattern = mFileName + QString::fromUtf8(".%1");
      int lastExistingBackupIndex = 0;
-     for(int i = 1;i <= mBackupsCount;++i) {
+     for (int i = 1;i <= mBackupsCount;++i) {
          const QString backupFileName = logNamePattern.arg(i);
          if (QFile::exists(backupFileName))
              lastExistingBackupIndex = qMin(i, mBackupsCount - 1);
@@ -80,7 +80,7 @@ void QsLogging::SizeRotationStrategy::rotate()
      }
 
      // 2. shift up
-     for(int i = lastExistingBackupIndex;i >= 1;--i) {
+     for (int i = lastExistingBackupIndex;i >= 1;--i) {
          const QString oldName = logNamePattern.arg(i);
          const QString newName = logNamePattern.arg(i + 1);
          QFile::remove(newName);
