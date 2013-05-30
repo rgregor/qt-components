@@ -40,7 +40,7 @@
 
 namespace QsLogging
 {
-typedef QVector<Destination*> DestinationList;
+typedef QVector<DestinationPtr> DestinationList;
 
 static const char TraceString[] = "TRACE";
 static const char DebugString[] = "DEBUG";
@@ -127,9 +127,9 @@ Logger::~Logger()
     delete d;
 }
 
-void Logger::addDestination(Destination* destination)
+void Logger::addDestination(DestinationPtr destination)
 {
-    assert(destination);
+    assert(destination.data());
     d->destList.push_back(destination);
 }
 

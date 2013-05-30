@@ -27,6 +27,7 @@
 #define QSLOG_H
 
 #include "QsLogLevel.h"
+#include "QsLogDest.h"
 #include <QDebug>
 #include <QString>
 
@@ -47,7 +48,7 @@ public:
     }
 
     //! Adds a log message destination. Don't add null destinations.
-    void addDestination(Destination* destination);
+    void addDestination(DestinationPtr destination);
     //! Logging at a level < 'newLevel' will be ignored
     void setLoggingLevel(Level newLevel);
     //! The default level is INFO

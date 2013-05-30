@@ -27,7 +27,7 @@
 #define QSLOGDEST_H
 
 #include "QsLogLevel.h"
-#include <memory>
+#include <QSharedPointer>
 #include <QtGlobal>
 class QString;
 
@@ -41,7 +41,7 @@ public:
     virtual void write(const QString& message, Level level) = 0;
     virtual bool isValid() = 0; // returns whether the destination was created correctly
 };
-typedef std::auto_ptr<Destination> DestinationPtr;
+typedef QSharedPointer<Destination> DestinationPtr;
 
 //! Creates logging destinations/sinks. The caller will have ownership of 
 //! the newly created destinations.
