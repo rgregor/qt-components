@@ -31,7 +31,7 @@
 #include <QDebug>
 #include <QString>
 
-#define QS_LOG_VERSION "2.0b"
+#define QS_LOG_VERSION "2.0b1"
 
 namespace QsLogging
 {

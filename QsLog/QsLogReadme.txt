@@ -19,7 +19,6 @@ Usage
     Create as many destinations as you want by using the QsLogging::DestinationFactory.
     Add the destinations to the logger instance by calling addDestination.
 
-Note: The logger does not take ownership of the destinations. Make sure that the destinations still exist when you call one of the logging macros. A good place to create the destinations is the program's main function.
 Disabling logging
 
 Sometimes it's necessary to turn off logging. This can be done in several ways:
