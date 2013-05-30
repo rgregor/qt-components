@@ -30,6 +30,8 @@
 #include <QDebug>
 #include <QString>
 
+#define QS_LOG_VERSION "2.0b"
+
 namespace QsLogging
 {
 class Destination;
@@ -76,9 +78,12 @@ private:
     Logger& operator=(const Logger&);
     ~Logger();
 
+    void enqueueWrite(const QString& message, Level level);
     void write(const QString& message, Level level);
 
     LoggerImpl* d;
+
+    friend class LogWriterRunnable;
 };
 
 } // end namespace

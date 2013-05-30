@@ -25,7 +25,12 @@
 
 #include "QsLog.h"
 #include "QsLogDest.h"
+#ifdef QS_LOG_SEPARATE_THREAD
+#include <QThreadPool>
+#include <QRunnable>
+#else
 #include <QMutex>
+#endif
 #include <QVector>
 #include <QDateTime>
 #include <QtGlobal>
@@ -73,6 +78,25 @@ static const char* LevelToText(Level theLevel)
     }
 }
 
+#ifdef QS_LOG_SEPARATE_THREAD
+class LogWriterRunnable : public QRunnable
+{
+public:
+    LogWriterRunnable(const QString &message, Level level)
+        : mMessage(message)
+        , mLevel(level) {}
+
+    virtual void run()
+    {
+        Logger::instance().write(mMessage, mLevel);
+    }
+
+private:
+    QString mMessage;
+    Level mLevel;
+};
+#endif
+
 class LoggerImpl
 {
 public:
@@ -81,8 +105,16 @@ public:
     {
         // assume at least file + console
         destList.reserve(2);
+#ifdef QS_LOG_SEPARATE_THREAD
+        threadPool.setMaxThreadCount(1);
+        threadPool.setExpiryTimeout(-1);
+#endif
     }
+#ifdef QS_LOG_SEPARATE_THREAD
+    QThreadPool threadPool;
+#else
     QMutex logMutex;
+#endif
     Level level;
     DestinationList destList;
 };
@@ -123,9 +155,7 @@ void Logger::Helper::writeToLog()
                                   .arg(buffer)
                                   );
 
-    Logger& logger = Logger::instance();
-    QMutexLocker lock(&logger.d->logMutex);
-    logger.write(completeMessage, level);
+    Logger::instance().enqueueWrite(completeMessage, level);
 }
 
 Logger::Helper::~Helper()
@@ -142,6 +172,18 @@ Logger::Helper::~Helper()
     }
 }
 
+//! directs the message to the task queue or writes it directly
+void Logger::enqueueWrite(const QString& message, Level level)
+{
+#ifdef QS_LOG_SEPARATE_THREAD
+    LogWriterRunnable *r = new LogWriterRunnable(message, level);
+    d->threadPool.start(r);
+#else
+    QMutexLocker lock(&d->logMutex);
+    write(message, level);
+#endif
+}
+
 //! Sends the message to all the destinations. The level for this message is passed in case
 //! it's useful for processing in the destination.
 void Logger::write(const QString& message, Level level)
@@ -149,11 +191,6 @@ void Logger::write(const QString& message, Level level)
     for(DestinationList::iterator it = d->destList.begin(),
         endIt = d->destList.end();it != endIt;++it)
     {
-        if( !(*it) )
-        {
-            assert(!"null log destination");
-            continue;
-        }
         (*it)->write(message, level);
     }
 }
