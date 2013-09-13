@@ -8,15 +8,18 @@ int main(int argc, char *argv[])
 {
    QCoreApplication a(argc, argv);
 
+   using namespace QsLogging;
+
    // init the logging mechanism
-   QsLogging::Logger& logger = QsLogging::Logger::instance();
+   Logger& logger = Logger::instance();
    logger.setLoggingLevel(QsLogging::TraceLevel);
    const QString sLogPath(QDir(a.applicationDirPath()).filePath("log.txt"));
 
-   QsLogging::DestinationPtr fileDestination(
-      QsLogging::DestinationFactory::MakeFileDestination(sLogPath, true, 512, 2) );
-   QsLogging::DestinationPtr debugDestination(
-      QsLogging::DestinationFactory::MakeDebugOutputDestination() );
+   DestinationPtr fileDestination(DestinationFactory::MakeFileDestination(
+     sLogPath, EnableLogRotation, MaxSizeBytes(512), MaxOldLogCount(2)));
+
+   DestinationPtr debugDestination(DestinationFactory::MakeDebugOutputDestination());
+
    logger.addDestination(debugDestination);
    logger.addDestination(fileDestination);
 

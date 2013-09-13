@@ -32,13 +32,14 @@ namespace QsLogging
 {
 
 //! destination factory
-DestinationPtr DestinationFactory::MakeFileDestination(const QString& filePath, bool enableRotation,
-                                                       qint64 sizeInBytesToRotateAfter, int oldLogsToKeep)
+DestinationPtr DestinationFactory::MakeFileDestination(const QString& filePath,
+    LogRotationOption rotation, const MaxSizeBytes &sizeInBytesToRotateAfter,
+    const MaxOldLogCount &oldLogsToKeep)
 {
-    if (enableRotation) {
+    if (EnableLogRotation == rotation) {
         QScopedPointer<SizeRotationStrategy> logRotation(new SizeRotationStrategy);
-        logRotation->setMaximumSizeInBytes(sizeInBytesToRotateAfter);
-        logRotation->setBackupCount(oldLogsToKeep);
+        logRotation->setMaximumSizeInBytes(sizeInBytesToRotateAfter.size);
+        logRotation->setBackupCount(oldLogsToKeep.count);
 
         return DestinationPtr(new FileDestination(filePath, RotationStrategyPtr(logRotation.take())));
     }

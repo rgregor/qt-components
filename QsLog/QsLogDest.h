@@ -43,12 +43,38 @@ public:
 };
 typedef QSharedPointer<Destination> DestinationPtr;
 
-//! Creates logging destinations/sinks. The caller will have ownership of 
-//! the newly created destinations.
+
+// a series of "named" paramaters, to make the file destination creation more readable
+enum LogRotationOption
+{
+    DisableLogRotation = 0,
+    EnableLogRotation  = 1
+};
+
+struct MaxSizeBytes
+{
+    MaxSizeBytes() : size(0) {}
+    MaxSizeBytes(qint64 size_) : size(size_) {}
+    qint64 size;
+};
+
+struct MaxOldLogCount
+{
+    MaxOldLogCount() : count(0) {}
+    MaxOldLogCount(int count_) : count(count_) {}
+    int count;
+};
+
+
+//! Creates logging destinations/sinks. The caller shares ownership of the destinations with the logger.
+//! After being added to a logger, the caller can discard the pointers.
 class DestinationFactory
 {
 public:
-    static DestinationPtr MakeFileDestination(const QString& filePath, bool enableRotation = false, qint64 sizeInBytesToRotateAfter = 0, int oldLogsToKeep = 0);
+    static DestinationPtr MakeFileDestination(const QString& filePath,
+        LogRotationOption rotation = DisableLogRotation,
+        const MaxSizeBytes &sizeInBytesToRotateAfter = MaxSizeBytes(),
+        const MaxOldLogCount &oldLogsToKeep = MaxOldLogCount());
     static DestinationPtr MakeDebugOutputDestination();
 };
 
