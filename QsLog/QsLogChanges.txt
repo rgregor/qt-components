@@ -1,6 +1,8 @@
 QsLog version 2.0b2
-* small fucntion signature redefinition for file destination creation
+* function signature redefinition for file destination creation
 * removed Symbian support
+* added shared library build configuration. Credit goes to Xavier Lamien <laxathom@fedoraproject.org>
+for the Linux-specific config.
 
 QsLog version 2.0b1
 
