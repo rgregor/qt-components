@@ -22,7 +22,7 @@ win32|macx {
 } else {
     # on Linux make install will install the shared object in the appropriate folders
     linux {
-        DESTDIR = ./lib
+        DESTDIR = $$BUILDDIR
 
         headers.files = QsLog.h QsLogDest.h QsLogLevel.h
         headers.path = /usr/include/$(QMAKE_TARGET)
