@@ -42,6 +42,9 @@ namespace QsLogging
 {
 typedef QVector<DestinationPtr> DestinationList;
 
+QScopedPointer<Logger> Logger::mStaticInstance(0);
+Logger *Logger::mWeakStaticInstance = 0;
+
 static const char TraceString[] = "TRACE";
 static const char DebugString[] = "DEBUG";
 static const char InfoString[]  = "INFO";

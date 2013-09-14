@@ -30,6 +30,7 @@
 #include "QsLogDest.h"
 #include <QDebug>
 #include <QString>
+#include <QScopedPointer>
 
 #define QS_LOG_VERSION "2.0b1"
 
@@ -41,11 +42,34 @@ class LoggerImpl; // d pointer
 class Logger
 {
 public:
+    // If you want to include QsLog both in a dynamic library and an executable while logging to the same
+    // destinations, then the Logger object from the executable has to be passed to the library
+    // and this function should be called before instance() when initializing the logger for the
+    // first time in the library. The library must stop logging once the object in the executable
+    // is destroyed.
+    static void setSharedLibraryInstanceFromExistingLoggerInstance(const Logger &existingInstance)
+    {
+        Q_ASSERT_X(existingInstance.mStaticInstance.data(), "QsLog",
+                   "must pass a real instance created with instance()");
+        Q_ASSERT_X(existingInstance.mStaticInstance.data() != mStaticInstance.data(), "QsLog",
+                   "instance already created, call this function before instance()");
+        Q_ASSERT_X(0 == mWeakStaticInstance, "QsLog",
+                   "instance was already set, cannot call multiple times");
+
+        mWeakStaticInstance = existingInstance.mStaticInstance.data();
+    }
+
     static Logger& instance()
     {
-        static Logger staticLog;
-        return staticLog;
+        if (mWeakStaticInstance)
+            return *mWeakStaticInstance;
+
+        if (!mStaticInstance.data())
+            mStaticInstance.reset(new Logger);
+        return *mStaticInstance.data();
     }
+
+    ~Logger();
 
     //! Adds a log message destination. Don't add null destinations.
     void addDestination(DestinationPtr destination);
@@ -75,15 +99,16 @@ public:
 
 private:
     Logger();
-    Logger(const Logger&);
-    Logger& operator=(const Logger&);
-    ~Logger();
+    Logger(const Logger&);            // not available
+    Logger& operator=(const Logger&); // not available
 
     void enqueueWrite(const QString& message, Level level);
     void write(const QString& message, Level level);
 
     LoggerImpl* d;
 
+    static QScopedPointer<Logger> mStaticInstance;
+    static Logger *mWeakStaticInstance;
     friend class LogWriterRunnable;
 };
 
