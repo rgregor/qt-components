@@ -21,7 +21,7 @@ win32|macx {
     }
 } else {
     # on Linux make install will install the shared object in the appropriate folders
-    linux {
+    linux-g++ {
         DESTDIR = $$BUILDDIR
 
         headers.files = QsLog.h QsLogDest.h QsLogLevel.h
