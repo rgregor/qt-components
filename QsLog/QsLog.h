@@ -30,7 +30,6 @@
 #include "QsLogDest.h"
 #include <QDebug>
 #include <QString>
-#include <QScopedPointer>
 
 #define QS_LOG_VERSION "2.0b1"
 
@@ -39,35 +38,10 @@ namespace QsLogging
 class Destination;
 class LoggerImpl; // d pointer
 
-class Logger
+class QSLOG_SHARED_OBJECT Logger
 {
 public:
-    // If you want to include QsLog both in a dynamic library and an executable while logging to the same
-    // destinations, then the Logger object from the executable has to be passed to the library
-    // and this function should be called before instance() when initializing the logger for the
-    // first time in the library. The library must stop logging once the object in the executable
-    // is destroyed.
-    static void setSharedLibraryInstanceFromExistingLoggerInstance(const Logger &existingInstance)
-    {
-        Q_ASSERT_X(existingInstance.mStaticInstance.data(), "QsLog",
-                   "must pass a real instance created with instance()");
-        Q_ASSERT_X(existingInstance.mStaticInstance.data() != mStaticInstance.data(), "QsLog",
-                   "instance already created, call this function before instance()");
-        Q_ASSERT_X(0 == mWeakStaticInstance, "QsLog",
-                   "instance was already set, cannot call multiple times");
-
-        mWeakStaticInstance = existingInstance.mStaticInstance.data();
-    }
-
-    static Logger& instance()
-    {
-        if (mWeakStaticInstance)
-            return *mWeakStaticInstance;
-
-        if (!mStaticInstance.data())
-            mStaticInstance.reset(new Logger);
-        return *mStaticInstance.data();
-    }
+    static Logger& instance();
 
     ~Logger();
 
@@ -107,8 +81,6 @@ private:
 
     LoggerImpl* d;
 
-    static QScopedPointer<Logger> mStaticInstance;
-    static Logger *mWeakStaticInstance;
     friend class LogWriterRunnable;
 };
 

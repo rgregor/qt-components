@@ -31,10 +31,16 @@
 #include <QtGlobal>
 class QString;
 
+#ifdef QSLOG_IS_SHARED_LIBRARY
+#define QSLOG_SHARED_OBJECT Q_DECL_EXPORT
+#else
+#define QSLOG_SHARED_OBJECT Q_DECL_IMPORT
+#endif
+
 namespace QsLogging
 {
 
-class Destination
+class QSLOG_SHARED_OBJECT Destination
 {
 public:
     virtual ~Destination(){}
@@ -51,14 +57,14 @@ enum LogRotationOption
     EnableLogRotation  = 1
 };
 
-struct MaxSizeBytes
+struct QSLOG_SHARED_OBJECT MaxSizeBytes
 {
     MaxSizeBytes() : size(0) {}
     MaxSizeBytes(qint64 size_) : size(size_) {}
     qint64 size;
 };
 
-struct MaxOldLogCount
+struct QSLOG_SHARED_OBJECT MaxOldLogCount
 {
     MaxOldLogCount() : count(0) {}
     MaxOldLogCount(int count_) : count(count_) {}
@@ -68,7 +74,7 @@ struct MaxOldLogCount
 
 //! Creates logging destinations/sinks. The caller shares ownership of the destinations with the logger.
 //! After being added to a logger, the caller can discard the pointers.
-class DestinationFactory
+class QSLOG_SHARED_OBJECT DestinationFactory
 {
 public:
     static DestinationPtr MakeFileDestination(const QString& filePath,

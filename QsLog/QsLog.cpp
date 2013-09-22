@@ -28,9 +28,8 @@
 #ifdef QS_LOG_SEPARATE_THREAD
 #include <QThreadPool>
 #include <QRunnable>
-#else
-#include <QMutex>
 #endif
+#include <QMutex>
 #include <QVector>
 #include <QDateTime>
 #include <QtGlobal>
@@ -41,9 +40,6 @@
 namespace QsLogging
 {
 typedef QVector<DestinationPtr> DestinationList;
-
-QScopedPointer<Logger> Logger::mStaticInstance(0);
-Logger *Logger::mWeakStaticInstance = 0;
 
 static const char TraceString[] = "TRACE";
 static const char DebugString[] = "DEBUG";
@@ -83,14 +79,8 @@ static const char* LevelToText(Level theLevel)
 class LogWriterRunnable : public QRunnable
 {
 public:
-    LogWriterRunnable(const QString &message, Level level)
-        : mMessage(message)
-        , mLevel(level) {}
-
-    virtual void run()
-    {
-        Logger::instance().write(mMessage, mLevel);
-    }
+    LogWriterRunnable(const QString &message, Level level);
+    virtual void run();
 
 private:
     QString mMessage;
@@ -101,33 +91,58 @@ private:
 class LoggerImpl
 {
 public:
-    LoggerImpl() :
-        level(InfoLevel)
-    {
-        // assume at least file + console
-        destList.reserve(2);
-#ifdef QS_LOG_SEPARATE_THREAD
-        threadPool.setMaxThreadCount(1);
-        threadPool.setExpiryTimeout(-1);
-#endif
-    }
+    LoggerImpl();
+
 #ifdef QS_LOG_SEPARATE_THREAD
     QThreadPool threadPool;
-#else
-    QMutex logMutex;
 #endif
+    QMutex logMutex;
     Level level;
     DestinationList destList;
 };
 
-Logger::Logger() :
-    d(new LoggerImpl)
+
+LogWriterRunnable::LogWriterRunnable(const QString &message, Level level)
+    : mMessage(message)
+    , mLevel(level) {}
+
+void LogWriterRunnable::run()
 {
+    QMutexLocker lock(&Logger::instance().d->logMutex);
+    Logger::instance().write(mMessage, mLevel);
+}
+
+
+LoggerImpl::LoggerImpl()
+    : level(InfoLevel)
+{
+    // assume at least file + console
+    destList.reserve(2);
+#ifdef QS_LOG_SEPARATE_THREAD
+    threadPool.setMaxThreadCount(1);
+    threadPool.setExpiryTimeout(-1);
+#endif
+}
+
+
+Logger::Logger()
+    : d(new LoggerImpl)
+{
+}
+
+Logger &Logger::instance()
+{
+    static Logger instance;
+    return instance;
 }
 
 Logger::~Logger()
 {
+#ifdef QS_LOG_SEPARATE_THREAD
+    d->threadPool.waitForDone();
+#endif
     delete d;
+    d = 0;
 }
 
 void Logger::addDestination(DestinationPtr destination)
