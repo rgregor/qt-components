@@ -79,7 +79,7 @@ static const char* LevelToText(Level theLevel)
 class LogWriterRunnable : public QRunnable
 {
 public:
-    LogWriterRunnable(const QString &message, Level level);
+    LogWriterRunnable(QString message, Level level);
     virtual void run();
 
 private:
@@ -101,16 +101,20 @@ public:
     DestinationList destList;
 };
 
-
-LogWriterRunnable::LogWriterRunnable(const QString &message, Level level)
-    : mMessage(message)
-    , mLevel(level) {}
+#ifdef QS_LOG_SEPARATE_THREAD
+LogWriterRunnable::LogWriterRunnable(QString message, Level level)
+    : QRunnable()
+    , mMessage(message)
+    , mLevel(level)
+{
+}
 
 void LogWriterRunnable::run()
 {
     QMutexLocker lock(&Logger::instance().d->logMutex);
     Logger::instance().write(mMessage, mLevel);
 }
+#endif
 
 
 LoggerImpl::LoggerImpl()
