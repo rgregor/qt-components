@@ -2,6 +2,7 @@
 #include "QsLog.h"
 #include "QsLogDest.h"
 #include <QHash>
+#include <QSharedPointer>
 #include <QtGlobal>
 
 // A destination that tracks log messages
@@ -16,6 +17,18 @@ public:
         mMessages.push_back(m);
         ++mCountByLevel[level];
     }
+
+    virtual bool isValid()
+    {
+        return true;
+    }
+
+    struct Message
+    {
+        Message() : level(QsLogging::TraceLevel) {}
+        QString text;
+        QsLogging::Level level;
+    };
 
     void clear()
     {
@@ -43,14 +56,13 @@ public:
         return false;
     }
 
-private:
-    struct Message
+    const Message& messageAt(int index)
     {
-        Message() : level(QsLogging::TraceLevel) {}
-        QString text;
-        QsLogging::Level level;
-    };
+        Q_ASSERT(index >= 0 && index < messageCount());
+        return mMessages.at(index);
+    }
 
+private:
     QHash<QsLogging::Level,int> mCountByLevel;
     QList<Message> mMessages;
 };
@@ -71,10 +83,11 @@ private slots:
     void testAllLevels();
     void testMessageText();
     void testLevelChanges();
+    void testLevelParsing();
 
 private:
-    QScopedPointer<MockDestination> mockDest1;
-    QScopedPointer<MockDestination> mockDest2;
+    QSharedPointer<MockDestination> mockDest1;
+    QSharedPointer<MockDestination> mockDest2;
 };
 
 void TestLog::initTestCase()
@@ -83,8 +96,8 @@ void TestLog::initTestCase()
     QCOMPARE(Logger::instance().loggingLevel(), InfoLevel);
     Logger::instance().setLoggingLevel(TraceLevel);
     QCOMPARE(Logger::instance().loggingLevel(), TraceLevel);
-    Logger::instance().addDestination(mockDest1.data());
-    Logger::instance().addDestination(mockDest2.data());
+    Logger::instance().addDestination(mockDest1);
+    Logger::instance().addDestination(mockDest2);
 }
 
 void TestLog::testAllLevels()
@@ -156,6 +169,27 @@ void TestLog::testLevelChanges()
     QCOMPARE(mockDest2->messageCountForLevel(ErrorLevel), 1);
     QCOMPARE(mockDest2->messageCountForLevel(FatalLevel), 1);
     QCOMPARE(mockDest2->messageCount(), 3);
+}
+
+void TestLog::testLevelParsing()
+{
+    mockDest1->clear();
+
+    QLOG_TRACE() << "one";
+    QLOG_DEBUG() << "two";
+    QLOG_INFO() << "three";
+    QLOG_WARN() << "warning";
+    QLOG_ERROR() << "error";
+    QLOG_FATAL() << "fatal";
+
+    using namespace QsLogging;
+    for(int i = 0;i < mockDest1->messageCount();++i) {
+        bool conversionOk = false;
+        const MockDestination::Message& m = mockDest1->messageAt(i);
+        QCOMPARE(Logger::levelFromLogMessage(m.text, &conversionOk), m.level);
+        QCOMPARE(Logger::levelFromLogMessage(m.text), m.level);
+        QCOMPARE(conversionOk, true);
+    }
 }
 
 QTTESTUTIL_REGISTER_TEST(TestLog);

@@ -42,6 +42,7 @@ class QSLOG_SHARED_OBJECT Logger
 {
 public:
     static Logger& instance();
+    static Level levelFromLogMessage(const QString& logMessage, bool* conversionSucceeded = 0);
 
     ~Logger();
 

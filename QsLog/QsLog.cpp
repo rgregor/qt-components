@@ -43,8 +43,8 @@ typedef QVector<DestinationPtr> DestinationList;
 
 static const char TraceString[] = "TRACE";
 static const char DebugString[] = "DEBUG";
-static const char InfoString[]  = "INFO";
-static const char WarnString[]  = "WARN";
+static const char InfoString[]  = "INFO ";
+static const char WarnString[]  = "WARN ";
 static const char ErrorString[] = "ERROR";
 static const char FatalString[] = "FATAL";
 
@@ -140,6 +140,31 @@ Logger &Logger::instance()
     return instance;
 }
 
+// tries to extract the level from a string log message. If available ok will contain the conversion
+// result.
+Level Logger::levelFromLogMessage(const QString& logMessage, bool* conversionSucceeded)
+{
+    if (conversionSucceeded)
+        *conversionSucceeded = true;
+
+    if (logMessage.startsWith(QLatin1String(TraceString)))
+        return TraceLevel;
+    if (logMessage.startsWith(QLatin1String(DebugString)))
+        return DebugLevel;
+    if (logMessage.startsWith(QLatin1String(InfoString)))
+        return InfoLevel;
+    if (logMessage.startsWith(QLatin1String(WarnString)))
+        return WarnLevel;
+    if (logMessage.startsWith(QLatin1String(ErrorString)))
+        return ErrorLevel;
+    if (logMessage.startsWith(QLatin1String(FatalString)))
+        return FatalLevel;
+
+    if (conversionSucceeded)
+        *conversionSucceeded = false;
+    return OffLevel;
+}
+
 Logger::~Logger()
 {
 #ifdef QS_LOG_SEPARATE_THREAD
@@ -170,7 +195,7 @@ void Logger::Helper::writeToLog()
 {
     const char* const levelName = LevelToText(level);
     const QString completeMessage(QString("%1 %2 %3")
-                                  .arg(levelName, 5)
+                                  .arg(levelName)
                                   .arg(QDateTime::currentDateTime().toString(fmtDateTime))
                                   .arg(buffer)
                                   );
